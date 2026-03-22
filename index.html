@@ -698,11 +698,17 @@ function openSort() {
   var html = opts.map(function(o) {
     return '<div class="sopt ' + (order===o.k?'on':'') + '" onclick="setOrder(\'' + o.k + '\')">' + o.l + (order===o.k?' <span>&#10003;</span>':'') + '</div>';
   }).join('');
-  html += '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">'
-    + '<button onclick="forceUpdate()" style="width:100%;padding:14px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;font-family:sans-serif;cursor:pointer;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;display:block;">'
-    + '\uc571 \uc5c5\ub370\uc774\ud2b8 \ud655\uc778'
-    + '</button></div>';
+  html += '<div id="updateWrap" style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)"></div>';
   document.getElementById('sortBody').innerHTML = html;
+
+  // 버튼을 DOM으로 직접 생성 — innerHTML onclick 방식 우회
+  var btn = document.createElement('button');
+  btn.textContent = '\uc571 \uc5c5\ub370\uc774\ud2b8 \ud655\uc778';
+  btn.setAttribute('style', 'width:100%;padding:14px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:13px;font-family:sans-serif;cursor:pointer;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;display:block;');
+  btn.addEventListener('touchend', function(e) { e.preventDefault(); forceUpdate(); });
+  btn.addEventListener('click', function() { forceUpdate(); });
+  document.getElementById('updateWrap').appendChild(btn);
+
   open2('sortOv');
 }
 
