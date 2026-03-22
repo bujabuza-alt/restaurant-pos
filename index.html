@@ -43,6 +43,7 @@
       --sb: env(safe-area-inset-bottom, 0px);
     }
 
+```
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%; overflow: hidden;
@@ -265,6 +266,7 @@ html, body {
   pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+```
 
   </style>
 </head>
@@ -319,6 +321,7 @@ html, body {
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="addTitle">새 상품 추가</div>
 
+```
 <div class="fg">
   <label class="flbl">상품명 *</label>
   <input class="fi" id="fName" type="text" placeholder="예: 아메리카노 원두"/>
@@ -356,6 +359,7 @@ html, body {
   <button class="btn btn-sec" onclick="close2('addOv')">취소</button>
   <button class="btn btn-ok"  onclick="saveItem()">저장</button>
 </div>
+```
 
   </div>
 </div>
@@ -707,14 +711,14 @@ function openSort() {
 
 function forceUpdate() {
   if (!('serviceWorker' in navigator)) { toast('서비스 워커를 지원하지 않습니다'); return; }
-  navigator.serviceWorker.getRegistration('./sw.js').then(reg => {
-    if (!reg) { toast('등록된 서비스 워커가 없습니다'); return; }
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    if (!regs.length) { toast('등록된 서비스 워커가 없습니다'); return; }
+    const reg = regs[0];
     toast('🔄 업데이트 확인 중…');
     reg.update().then(() => {
       const w = reg.installing || reg.waiting;
       if (w) {
         w.postMessage({ type: 'SKIP_WAITING' });
-        // controllerchange 이벤트가 reload 처리 — 데이터는 localStorage에 안전
       } else {
         toast('✅ 이미 최신 버전입니다');
       }
