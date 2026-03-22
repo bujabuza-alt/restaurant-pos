@@ -9,21 +9,17 @@
   <meta name="theme-color" content="#0a0a0f"/>
   <title>재고 관리</title>
   <script>
-    // Service Worker 등록 — 업데이트 자동 감지
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').then(reg => {
-        // 새 버전 감지되면 즉시 활성화
+      navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).then(reg => {
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              // 새 버전 있음 → SW에 skipWaiting 요청
               newWorker.postMessage({ type: 'SKIP_WAITING' });
             }
           });
         });
       });
-      // SW가 교체되면 페이지 자동 새로고침
       let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (!refreshing) { refreshing = true; location.reload(); }
@@ -48,7 +44,6 @@
     }
 
 ```
-/* ── RESET ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
   height: 100%; overflow: hidden;
@@ -58,47 +53,39 @@ html, body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* ── LAYOUT ── */
 #app { display: flex; flex-direction: column; height: 100dvh; max-width: 480px; margin: 0 auto; }
 
-/* ── HEADER ── */
 .hdr { padding: calc(var(--st) + 16px) 20px 12px; border-bottom: 1px solid var(--border); }
 .hdr-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .logo { font-family: 'Space Mono', monospace; font-size: 18px; font-weight: 700; color: var(--accent); user-select: none; }
 .logo span { color: var(--text2); font-weight: 400; }
 .hdr-btns { display: flex; gap: 8px; }
 
-/* ── ICON BUTTON ── */
 .ibtn {
   width: 36px; height: 36px; border-radius: 10px;
   background: var(--surf2); border: 1px solid var(--border);
   color: var(--text); display: flex; align-items: center; justify-content: center;
   cursor: pointer; font-size: 16px;
-  /* 터치 이벤트 명확히 허용 */
   touch-action: manipulation;
   -webkit-user-select: none; user-select: none;
 }
 .ibtn:active { opacity: .7; }
 
-/* ── SEARCH ── */
 .srch { display: flex; align-items: center; background: var(--surf2); border: 1px solid var(--border); border-radius: 12px; padding: 0 12px; gap: 8px; }
 .srch svg { color: var(--text2); flex-shrink: 0; }
 .srch input { flex: 1; background: transparent; border: none; outline: none; color: var(--text); font-size: 15px; font-family: 'Noto Sans KR', sans-serif; padding: 10px 0; }
 .srch input::placeholder { color: var(--text2); }
 
-/* ── TABS ── */
 .tabs { display: flex; padding: 10px 20px 4px; gap: 6px; overflow-x: auto; scrollbar-width: none; -webkit-user-select: none; user-select: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; white-space: nowrap; border: 1px solid var(--border); color: var(--text2); background: transparent; touch-action: manipulation; cursor: pointer; flex-shrink: 0; }
 .tab.on { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 700; }
 
-/* ── FILTER CHIPS ── */
 .chips { display: flex; gap: 8px; padding: 8px 20px 0; overflow-x: auto; scrollbar-width: none; }
 .chips::-webkit-scrollbar { display: none; }
 .chip { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; white-space: nowrap; border: 1px solid var(--border); color: var(--text2); background: transparent; flex-shrink: 0; touch-action: manipulation; cursor: pointer; -webkit-user-select: none; user-select: none; }
 .chip.on { background: var(--surf2); color: var(--text); border-color: rgba(255,255,255,.2); }
 
-/* ── STATS ── */
 .stats { display: flex; gap: 8px; padding: 12px 20px 0; }
 .sc { flex: 1; background: var(--surf); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
 .sc-lbl { font-size: 10px; color: var(--text2); margin-bottom: 3px; text-transform: uppercase; letter-spacing: .5px; }
@@ -107,17 +94,22 @@ html, body {
 .c-orange { color: var(--warn); }
 .c-red { color: var(--danger); }
 
-/* ── SCROLL AREA ── */
 .scroll { flex: 1; overflow-y: auto; padding: 12px 20px; padding-bottom: calc(var(--sb) + 90px); overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
 
-/* ── ITEM CARD ── */
+/* ── 카드 아이콘: 이니셜 뱃지 ── */
 .card { background: var(--surf); border: 1px solid var(--border); border-radius: var(--r); padding: 14px; margin-bottom: 10px; display: flex; gap: 12px; align-items: center; position: relative; overflow: hidden; touch-action: manipulation; cursor: pointer; -webkit-user-select: none; user-select: none; }
 .card:active { opacity: .8; }
 .card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); border-radius: 3px 0 0 3px; }
 .card.low::before { background: var(--warn); }
 .card.out::before { background: var(--danger); }
 
-.c-ico { width: 44px; height: 44px; background: var(--surf2); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+.c-ico {
+  width: 44px; height: 44px; background: var(--surf2); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; font-family: 'Space Mono', monospace;
+  color: var(--accent); flex-shrink: 0; letter-spacing: -.5px;
+}
+
 .c-inf { flex: 1; min-width: 0; }
 .c-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
 .c-meta { font-size: 12px; color: var(--text2); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -128,7 +120,6 @@ html, body {
 .qty-unit { font-size: 11px; color: var(--text2); }
 .qty-ctrl { display: flex; gap: 6px; }
 
-/* ── +/- BUTTONS (카드 위) ── */
 .qbtn {
   width: 28px; height: 28px; border-radius: 8px;
   border: 1px solid var(--border); background: var(--surf2); color: var(--text);
@@ -140,12 +131,10 @@ html, body {
 .qbtn.p { border-color: var(--accent); color: var(--accent); }
 .qbtn.m { border-color: rgba(255,59,92,.4); color: var(--danger); }
 
-/* ── EMPTY ── */
 .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text2); text-align: center; gap: 12px; }
 .empty .ei { font-size: 48px; }
 .empty p { font-size: 14px; line-height: 1.6; }
 
-/* ── FAB ── */
 .fab {
   position: fixed; bottom: calc(var(--sb) + 24px); left: 50%; transform: translateX(-50%);
   width: min(calc(100% - 40px), 440px);
@@ -155,15 +144,12 @@ html, body {
   box-shadow: 0 8px 32px rgba(0,229,160,.3);
   touch-action: manipulation; cursor: pointer;
   -webkit-user-select: none; user-select: none;
-  z-index: 10; /* 낮게 유지 — 모달 overlay보다 낮아야 함 */
+  z-index: 10;
 }
 .fab:active { opacity: .85; }
 
-/* ── MODAL OVERLAY ──
-   핵심: display:none ↔ display:flex 으로 전환.
-   opacity 방식은 pointer-events 버그 위험이 있음. ── */
 .overlay {
-  display: none;               /* 기본: 완전히 숨김 → 터치 차단 없음 */
+  display: none;
   position: fixed; inset: 0;
   background: rgba(0,0,0,.72);
   z-index: 500;
@@ -171,9 +157,8 @@ html, body {
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
 }
-.overlay.open { display: flex; }  /* 열릴 때만 보임 */
+.overlay.open { display: flex; }
 
-/* ── MODAL SHEET ── */
 .sheet {
   background: var(--surf); border-radius: 24px 24px 0 0;
   width: 100%; max-width: 480px; margin: 0 auto;
@@ -186,7 +171,7 @@ html, body {
 .sheet-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
 .sheet-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
 
-/* ── FORM ── */
+/* ── FORM — 1열 레이아웃 ── */
 .fg { margin-bottom: 14px; }
 .flbl { font-size: 12px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: block; -webkit-user-select: none; user-select: none; }
 .fi {
@@ -200,27 +185,6 @@ html, body {
 .frow { display: flex; gap: 10px; }
 .frow .fg { flex: 1; }
 
-/* ── EMOJI PICKER ── */
-.epick {
-  display: grid; grid-template-columns: repeat(8,1fr); gap: 6px;
-  background: var(--surf2); border: 1px solid var(--border);
-  border-radius: 12px; padding: 10px;
-  /* 텍스트 선택 메뉴 완전 차단 */
-  -webkit-user-select: none; user-select: none;
-  -webkit-touch-callout: none;
-  touch-action: manipulation;
-}
-.eopt {
-  aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
-  font-size: 20px; border-radius: 8px;
-  touch-action: manipulation; cursor: pointer;
-  -webkit-user-select: none; user-select: none;
-  -webkit-touch-callout: none;
-}
-.eopt:active { transform: scale(.82); }
-.eopt.on { background: var(--accent); }
-
-/* ── BUTTONS ── */
 .brow { display: flex; gap: 10px; margin-top: 20px; }
 .btn {
   flex: 1; padding: 14px; border-radius: 12px; border: none;
@@ -235,7 +199,12 @@ html, body {
 
 /* ── DETAIL ── */
 .dh { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
-.dh-ico { width: 60px; height: 60px; background: var(--surf2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; }
+.dh-ico {
+  width: 60px; height: 60px; background: var(--surf2); border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 700; font-family: 'Space Mono', monospace;
+  color: var(--accent); letter-spacing: -.5px;
+}
 .dh-name { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
 .dh-cat { font-size: 13px; color: var(--text2); }
 
@@ -258,7 +227,6 @@ html, body {
 .dmi-lbl { font-size: 11px; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px; }
 .dmi-val { font-size: 15px; font-weight: 600; }
 
-/* ── HISTORY ── */
 .hsum { display: flex; gap: 8px; margin-bottom: 14px; }
 .hsc { flex: 1; background: var(--surf2); border-radius: 10px; padding: 10px; text-align: center; }
 .hsc-lbl { font-size: 10px; color: var(--text2); margin-bottom: 3px; }
@@ -290,7 +258,6 @@ html, body {
 .htime { font-size: 11px; color: var(--text2); white-space: nowrap; flex-shrink: 0; }
 .hempty { text-align: center; color: var(--text2); font-size: 13px; padding: 24px 0; }
 
-/* ── SORT OPTS ── */
 .sopt {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 16px; border-radius: 12px; border: 1px solid var(--border);
@@ -302,7 +269,6 @@ html, body {
 .sopt:active { opacity: .7; }
 .sopt.on { border-color: var(--accent); color: var(--accent); }
 
-/* ── TOAST ── */
 .toast {
   position: fixed; bottom: calc(var(--sb) + 110px); left: 50%;
   transform: translateX(-50%) translateY(10px);
@@ -320,7 +286,6 @@ html, body {
 </head>
 <body>
 <div id="app">
-  <!-- HEADER -->
   <div class="hdr">
     <div class="hdr-top">
       <div class="logo">STOCK<span>/mgr</span></div>
@@ -363,17 +328,14 @@ html, body {
   </button>
 </div>
 
-<!-- ── ADD/EDIT MODAL ── -->
+<!-- ADD/EDIT MODAL -->
 
 <div class="overlay" id="addOv" onclick="bgClose(event,'addOv')">
   <div class="sheet">
     <div class="sheet-handle"></div>
     <div class="sheet-title" id="addTitle">새 상품 추가</div>
 
-<div class="fg">
-  <label class="flbl">아이콘</label>
-  <div class="epick" id="epick"></div>
-</div>
+```
 <div class="fg">
   <label class="flbl">상품명 *</label>
   <input class="fi" id="fName" type="text" placeholder="예: 아메리카노 원두"/>
@@ -399,15 +361,13 @@ html, body {
     <input class="fi" id="fMin" type="number" placeholder="0" min="0" inputmode="numeric"/>
   </div>
 </div>
-<div class="frow">
-  <div class="fg">
-    <label class="flbl">단가 (원)</label>
-    <input class="fi" id="fPrice" type="number" placeholder="0" min="0" inputmode="numeric"/>
-  </div>
-  <div class="fg">
-    <label class="flbl">위치/보관장소</label>
-    <input class="fi" id="fLoc" type="text" placeholder="냉장고 1층"/>
-  </div>
+<div class="fg">
+  <label class="flbl">단가 (원)</label>
+  <input class="fi" id="fPrice" type="number" placeholder="0" min="0" inputmode="numeric"/>
+</div>
+<div class="fg">
+  <label class="flbl">위치 / 보관장소</label>
+  <input class="fi" id="fLoc" type="text" placeholder="냉장고 1층"/>
 </div>
 <div class="fg">
   <label class="flbl">메모</label>
@@ -417,17 +377,18 @@ html, body {
   <button class="btn btn-sec" onclick="close2('addOv')">취소</button>
   <button class="btn btn-ok"  onclick="saveItem()">저장</button>
 </div>
+```
 
   </div>
 </div>
 
-<!-- ── DETAIL MODAL ── -->
+<!-- DETAIL MODAL -->
 
 <div class="overlay" id="detOv" onclick="bgClose(event,'detOv')">
   <div class="sheet" id="detSheet"></div>
 </div>
 
-<!-- ── SORT MODAL ── -->
+<!-- SORT MODAL -->
 
 <div class="overlay" id="sortOv" onclick="bgClose(event,'sortOv')">
   <div class="sheet">
@@ -440,19 +401,20 @@ html, body {
 <div class="toast" id="toast"></div>
 
 <script>
-/* ════════════════════════════════════════════
-   STATE
-════════════════════════════════════════════ */
-const EMOJIS = ['🛒','🍎','🥩','🧃','🥛','🫙','🧴','🧹','🔧','💊','📝','👕','👟','💻','📱','🎮','🏷️','🍺','☕','🍰','🌿','🧊','🔌','🪴','🧰','💡','🪣'];
+/* ── 이니셜 뱃지 생성 헬퍼 ── */
+function catInitial(cat) {
+  if (!cat) return '·';
+  // 한글: 첫 글자, 영문: 최대 2자 대문자
+  const c = cat.trim();
+  if (/[가-힣]/.test(c[0])) return c[0];
+  return c.slice(0, 2).toUpperCase();
+}
 
-/* ── localStorage 키 — 절대 바꾸지 말 것 ── */
+/* ── STATE ── */
 const STORE_KEY = 'stockmgr_data';
 
-/* ── 이전 버전 키에서 마이그레이션 (데이터 유실 방지) ── */
 (function migrate() {
-  if (localStorage.getItem(STORE_KEY)) return; // 이미 새 키에 데이터 있으면 패스
-
-  // 이전에 쓰던 키들을 순서대로 확인
+  if (localStorage.getItem(STORE_KEY)) return;
   const oldKeys = ['si2', 'stockItems'];
   for (const k of oldKeys) {
     const raw = localStorage.getItem(k);
@@ -460,9 +422,8 @@ const STORE_KEY = 'stockmgr_data';
       try {
         const data = JSON.parse(raw);
         if (Array.isArray(data) && data.length > 0) {
-          localStorage.setItem(STORE_KEY, raw); // 새 키로 복사
-          localStorage.removeItem(k);           // 구 키 삭제
-          console.log(`[migrate] ${k} → ${STORE_KEY} (${data.length}건)`);
+          localStorage.setItem(STORE_KEY, raw);
+          localStorage.removeItem(k);
           return;
         }
       } catch(e) {}
@@ -470,21 +431,18 @@ const STORE_KEY = 'stockmgr_data';
   }
 })();
 
-let DB    = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
-let tab   = 'all';
-let chip  = 'all';
-let order = 'name';
-let selE  = '📦';
-let editId= null;
-let dTab  = 'all'; // detail hist tab
+let DB     = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+let tab    = 'all';
+let chip   = 'all';
+let order  = 'name';
+let editId = null;
+let dTab   = 'all';
 
 const persist = () => localStorage.setItem(STORE_KEY, JSON.stringify(DB));
 const uid     = () => Date.now().toString(36) + Math.random().toString(36).slice(2);
 const fN      = n  => (n||0).toLocaleString('ko-KR');
 
-/* ════════════════════════════════════════════
-   DATE HELPERS
-════════════════════════════════════════════ */
+/* ── DATE HELPERS ── */
 function fDate(ts) {
   const d = new Date(ts);
   return `${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}`;
@@ -495,10 +453,11 @@ function fTime(ts) {
   return `${h<12?'오전':'오후'} ${h%12||12}:${m}`;
 }
 function fLabel(ts) {
-  const t = new Date(ts), now = new Date();
+  const now = new Date();
   const y = new Date(now); y.setDate(now.getDate()-1);
   if (fDate(ts)===fDate(now)) return '오늘';
   if (fDate(ts)===fDate(y))   return '어제';
+  const t = new Date(ts);
   return `${t.getMonth()+1}월 ${t.getDate()}일`;
 }
 function tAgo(ts) {
@@ -510,9 +469,7 @@ function tAgo(ts) {
 }
 const pad = n => String(n).padStart(2,'0');
 
-/* ════════════════════════════════════════════
-   TABS / CHIPS
-════════════════════════════════════════════ */
+/* ── TABS ── */
 const getCats = () => [...new Set(DB.map(i=>i.cat).filter(Boolean))];
 
 function renderTabs() {
@@ -521,9 +478,7 @@ function renderTabs() {
     `<button class="tab ${tab==='all'?'on':''}" onclick="setTab('all')">전체</button>`
     + cats.map(c=>`<button class="tab ${tab===c?'on':''}" onclick="setTab(${JSON.stringify(c)})">${c}</button>`).join('');
 }
-
 function setTab(t) { tab=t; render(); }
-
 function setChip(c, el) {
   chip = c;
   document.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));
@@ -531,9 +486,7 @@ function setChip(c, el) {
   render();
 }
 
-/* ════════════════════════════════════════════
-   STATS
-════════════════════════════════════════════ */
+/* ── STATS ── */
 function renderStats() {
   const list = getList();
   const low  = list.filter(i=>i.qty>0 && i.qty<=(i.min||0)).length;
@@ -546,9 +499,7 @@ function renderStats() {
     <div class="sc"><div class="sc-lbl">재고 총액</div><div class="sc-val" style="font-size:12px;color:var(--accent)">₩${fN(val)}</div></div>`;
 }
 
-/* ════════════════════════════════════════════
-   LIST
-════════════════════════════════════════════ */
+/* ── LIST ── */
 function getList() {
   const q = (document.getElementById('sq')?.value||'').toLowerCase();
   return DB.filter(i=>{
@@ -568,7 +519,6 @@ function getList() {
 
 function render() {
   renderTabs(); renderStats();
-  // datalist
   const dl = document.getElementById('catDL');
   if (dl) dl.innerHTML = getCats().map(c=>`<option value="${c}">`).join('');
 
@@ -583,7 +533,7 @@ function render() {
     const qc = item.qty<=0?'c-red': item.qty<=(item.min||0)?'c-orange':'c-green';
     return `
 <div class="card ${s}" onclick="openDet('${item.id}')">
-  <div class="c-ico">${item.emoji||'📦'}</div>
+  <div class="c-ico">${catInitial(item.cat)}</div>
   <div class="c-inf">
     <div class="c-name">${item.name}</div>
     <div class="c-meta">
@@ -604,9 +554,7 @@ function render() {
   }).join('');
 }
 
-/* ════════════════════════════════════════════
-   ADJUST QTY
-════════════════════════════════════════════ */
+/* ── ADJUST QTY ── */
 function adj(id, delta) {
   const item = DB.find(i=>i.id===id);
   if (!item) return;
@@ -623,18 +571,14 @@ function adj(id, delta) {
   }
 }
 
-/* ════════════════════════════════════════════
-   ADD / EDIT MODAL
-════════════════════════════════════════════ */
+/* ── ADD / EDIT MODAL ── */
 function openAdd(id) {
   editId = id||null;
-  selE   = '📦';
   document.getElementById('addTitle').textContent = id?'상품 수정':'새 상품 추가';
 
   if (id) {
     const it = DB.find(i=>i.id===id);
     if (it) {
-      selE = it.emoji||'📦';
       document.getElementById('fName').value  = it.name;
       document.getElementById('fCat').value   = it.cat||'';
       document.getElementById('fUnit').value  = it.unit||'';
@@ -647,23 +591,15 @@ function openAdd(id) {
   } else {
     ['fName','fCat','fUnit','fQty','fMin','fPrice','fLoc','fNote'].forEach(x=>{ document.getElementById(x).value=''; });
   }
-  buildEpick();
   open2('addOv');
   setTimeout(()=>document.getElementById('fName').focus(), 320);
 }
-
-function buildEpick() {
-  document.getElementById('epick').innerHTML = EMOJIS.map(e=>
-    `<div class="eopt${e===selE?' on':''}" ontouchend="pickE('${e}');event.preventDefault()" onclick="pickE('${e}')">${e}</div>`
-  ).join('');
-}
-function pickE(e) { selE=e; buildEpick(); }
 
 function saveItem() {
   const name = document.getElementById('fName').value.trim();
   if (!name) { toast('상품명을 입력해주세요'); return; }
   const data = {
-    emoji:selE, name,
+    name,
     cat:  document.getElementById('fCat').value.trim(),
     unit: document.getElementById('fUnit').value.trim()||'개',
     qty:  parseInt(document.getElementById('fQty').value)||0,
@@ -684,9 +620,7 @@ function saveItem() {
   persist(); close2('addOv'); render();
 }
 
-/* ════════════════════════════════════════════
-   DETAIL MODAL
-════════════════════════════════════════════ */
+/* ── DETAIL MODAL ── */
 let curDetId = null;
 
 function openDet(id) {
@@ -701,12 +635,10 @@ function renderDet(id) {
   const sc  = it.qty<=0?'c-red': it.qty<=(it.min||0)?'c-orange':'c-green';
   const hist= it.hist||[];
 
-  // 필터
-  const fil = dTab==='in' ? hist.filter(h=>h.d>0)
-            : dTab==='out'? hist.filter(h=>h.d<0)
+  const fil = dTab==='in'  ? hist.filter(h=>h.d>0)
+            : dTab==='out' ? hist.filter(h=>h.d<0)
             : hist;
 
-  // 날짜 그룹
   const groups={};
   fil.forEach(h=>{
     const k=fDate(h.ts);
@@ -736,7 +668,7 @@ function renderDet(id) {
   document.getElementById('detSheet').innerHTML = `
     <div class="sheet-handle"></div>
     <div class="dh">
-      <div class="dh-ico">${it.emoji||'📦'}</div>
+      <div class="dh-ico">${catInitial(it.cat)}</div>
       <div>
         <div class="dh-name">${it.name}</div>
         <div class="dh-cat">${it.cat||'미분류'}${it.loc?' · '+it.loc:''}</div>
@@ -769,8 +701,8 @@ function renderDet(id) {
     </div>
 
     <div class="htabs">
-      <div class="htab ${dTab==='all'?'on':''}"     onclick="setDTab('${id}','all')">전체 이력</div>
-      <div class="htab hin ${dTab==='in'?'on':''}"  onclick="setDTab('${id}','in')">📈 입고</div>
+      <div class="htab ${dTab==='all'?'on':''}"      onclick="setDTab('${id}','all')">전체 이력</div>
+      <div class="htab hin ${dTab==='in'?'on':''}"   onclick="setDTab('${id}','in')">📈 입고</div>
       <div class="htab hout ${dTab==='out'?'on':''}" onclick="setDTab('${id}','out')">📉 출고</div>
     </div>
     <div>${histHTML}</div>
@@ -792,9 +724,7 @@ function delItem(id) {
   toast('🗑️ 삭제되었습니다');
 }
 
-/* ════════════════════════════════════════════
-   SORT MODAL
-════════════════════════════════════════════ */
+/* ── SORT ── */
 function openSort() {
   const opts=[{k:'name',l:'이름순'},{k:'qty_asc',l:'수량 적은 순'},{k:'qty_desc',l:'수량 많은 순'},{k:'updated',l:'최근 수정순'}];
   document.getElementById('sortBody').innerHTML = opts.map(o=>`
@@ -805,9 +735,7 @@ function openSort() {
 }
 function setOrder(k) { order=k; close2('sortOv'); render(); }
 
-/* ════════════════════════════════════════════
-   CSV EXPORT
-════════════════════════════════════════════ */
+/* ── CSV EXPORT ── */
 function doExport() {
   const rows=[['상품명','카테고리','수량','단위','최소수량','단가','위치','메모'],
     ...DB.map(i=>[i.name,i.cat||'',i.qty,i.unit||'개',i.min||0,i.price||0,i.loc||'',i.note||''])];
@@ -818,16 +746,12 @@ function doExport() {
   toast('📥 CSV 내보내기 완료');
 }
 
-/* ════════════════════════════════════════════
-   MODAL HELPERS — display:none 방식으로 완전 교체
-════════════════════════════════════════════ */
+/* ── MODAL HELPERS ── */
 function open2(id)  { document.getElementById(id).classList.add('open'); }
 function close2(id) { document.getElementById(id).classList.remove('open'); }
 function bgClose(e, id) { if (e.target===document.getElementById(id)) close2(id); }
 
-/* ════════════════════════════════════════════
-   TOAST
-════════════════════════════════════════════ */
+/* ── TOAST ── */
 let toastT;
 function toast(msg) {
   const el=document.getElementById('toast');
@@ -836,22 +760,19 @@ function toast(msg) {
   toastT=setTimeout(()=>el.classList.remove('show'),2200);
 }
 
-/* ════════════════════════════════════════════
-   INIT — 완전히 새로 설치한 경우에만 샘플 데이터
-   (localStorage에 아무 데이터도 없을 때만 실행)
-════════════════════════════════════════════ */
+/* ── INIT — 샘플 데이터 (최초 설치 시만) ── */
 if (!localStorage.getItem(STORE_KEY)) {
   const n=Date.now(), d1=n-172800000, d2=n-86400000, d3=n-10800000;
   DB = [
-    {id:uid(),emoji:'☕',name:'원두 (에티오피아)',cat:'식재료',unit:'kg',qty:3,min:2,price:25000,loc:'창고 A',note:'',upd:n,crt:n,
+    {id:uid(),name:'원두 (에티오피아)',cat:'식재료',unit:'kg',qty:3,min:2,price:25000,loc:'창고 A',note:'',upd:n,crt:n,
      hist:[{d:5,r:5,ts:d1,m:'초도 입고'},{d:-1,r:4,ts:d2,m:''},{d:-1,r:3,ts:d3,m:''}]},
-    {id:uid(),emoji:'🥛',name:'우유',cat:'식재료',unit:'L',qty:8,min:5,price:2200,loc:'냉장고',note:'',upd:d2,crt:d2,
+    {id:uid(),name:'우유',cat:'식재료',unit:'L',qty:8,min:5,price:2200,loc:'냉장고',note:'',upd:d2,crt:d2,
      hist:[{d:10,r:10,ts:d1,m:'납품 입고'},{d:-2,r:8,ts:d2,m:''}]},
-    {id:uid(),emoji:'🧴',name:'세정제',cat:'소모품',unit:'개',qty:2,min:3,price:4500,loc:'청소함',note:'재주문 필요',upd:d3,crt:d3,
+    {id:uid(),name:'세정제',cat:'소모품',unit:'개',qty:2,min:3,price:4500,loc:'청소함',note:'재주문 필요',upd:d3,crt:d3,
      hist:[{d:5,r:5,ts:d1,m:''},{d:-3,r:2,ts:d3,m:'소비'}]},
-    {id:uid(),emoji:'📦',name:'테이크아웃 컵 (L)',cat:'포장재',unit:'개',qty:0,min:50,price:150,loc:'창고 B',note:'',upd:d2,crt:d2,
+    {id:uid(),name:'테이크아웃 컵 (L)',cat:'포장재',unit:'개',qty:0,min:50,price:150,loc:'창고 B',note:'',upd:d2,crt:d2,
      hist:[{d:100,r:100,ts:d1,m:'입고'},{d:-100,r:0,ts:d2,m:'소진'}]},
-    {id:uid(),emoji:'🍰',name:'시럽 (바닐라)',cat:'식재료',unit:'병',qty:5,min:2,price:8000,loc:'선반',note:'',upd:n,crt:n,
+    {id:uid(),name:'시럽 (바닐라)',cat:'식재료',unit:'병',qty:5,min:2,price:8000,loc:'선반',note:'',upd:n,crt:n,
      hist:[{d:6,r:6,ts:d1,m:''},{d:-1,r:5,ts:n,m:''}]},
   ];
   persist();
