@@ -1,6 +1,6 @@
 // ★ 코드를 수정할 때마다 이 버전 번호를 올려주세요 ★
 // 예: v1 → v2 → v3 …
-const VERSION = ‘v1.0.3’;
+const VERSION = ‘v1.0.4’;
 const CACHE   = `stock-mgr-${VERSION}`;
 
 // 캐시할 파일 목록
