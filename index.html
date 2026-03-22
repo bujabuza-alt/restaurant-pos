@@ -710,20 +710,34 @@ function openSort() {
 }
 
 function forceUpdate() {
-  if (!('serviceWorker' in navigator)) { toast('서비스 워커를 지원하지 않습니다'); return; }
-  navigator.serviceWorker.getRegistrations().then(regs => {
-    if (!regs.length) { toast('등록된 서비스 워커가 없습니다'); return; }
-    const reg = regs[0];
+  if (!('serviceWorker' in navigator)) { toast('서비스 워커 미지원'); return; }
+  // controller가 있으면 이미 SW가 제어 중
+  if (navigator.serviceWorker.controller) {
     toast('🔄 업데이트 확인 중…');
-    reg.update().then(() => {
-      const w = reg.installing || reg.waiting;
-      if (w) {
-        w.postMessage({ type: 'SKIP_WAITING' });
-      } else {
-        toast('✅ 이미 최신 버전입니다');
-      }
+    navigator.serviceWorker.ready.then(reg => {
+      reg.update().then(() => {
+        const w = reg.installing || reg.waiting;
+        if (w) {
+          w.postMessage({ type: 'SKIP_WAITING' });
+        } else {
+          toast('✅ 이미 최신 버전입니다');
+        }
+      }).catch(e => toast('오류: ' + e.message));
     });
-  });
+  } else {
+    // controller가 없으면 SW 재등록 시도
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+      .then(reg => {
+        toast('🔄 업데이트 확인 중…');
+        return reg.update();
+      })
+      .then(reg => {
+        const w = reg.installing || reg.waiting;
+        if (w) w.postMessage({ type: 'SKIP_WAITING' });
+        else toast('✅ 최신 버전입니다');
+      })
+      .catch(e => toast('오류: ' + e.message));
+  }
 }
 function setOrder(k) { order=k; close2('sortOv'); render(); }
 
