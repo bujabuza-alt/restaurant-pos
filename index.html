@@ -689,55 +689,31 @@ function delItem(id) {
 
 /* ── SORT ── */
 function openSort() {
-  const opts=[{k:'name',l:'이름순'},{k:'qty_asc',l:'수량 적은 순'},{k:'qty_desc',l:'수량 많은 순'},{k:'updated',l:'최근 수정순'}];
-  document.getElementById('sortBody').innerHTML = opts.map(o=>`
-    <div class="sopt ${order===o.k?'on':''}" onclick="setOrder('${o.k}')">
-      ${o.l} ${order===o.k?'<span>✓</span>':''}
-    </div>`).join('')
-    + `<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
-        <button onclick="forceUpdate()" style="
-          width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
-          background:transparent;color:var(--text2);font-size:12px;font-family:sans-serif;
-          cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:6px;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <polyline points="23 4 23 10 17 10"/>
-            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-          </svg>
-          앱 업데이트 확인
-        </button>
-      </div>`;
+  var opts=[{k:'name',l:'\uc774\ub984\uc21c'},{k:'qty_asc',l:'\uc218\ub7c9 \uc801\uc740 \uc21c'},{k:'qty_desc',l:'\uc218\ub7c9 \ub9ce\uc740 \uc21c'},{k:'updated',l:'\ucd5c\uadfc \uc218\uc815\uc21c'}];
+  var html = opts.map(function(o) {
+    return '<div class="sopt ' + (order===o.k?'on':'') + '" onclick="setOrder(\'' + o.k + '\')">' + o.l + (order===o.k?' <span>&#10003;</span>':'') + '</div>';
+  }).join('');
+  html += '<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">'
+    + '<button onclick="forceUpdate()" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text2);font-size:12px;font-family:sans-serif;cursor:pointer;touch-action:manipulation;">'
+    + '\uc571 \uc5c5\ub370\uc774\ud2b8 \ud655\uc778'
+    + '</button></div>';
+  document.getElementById('sortBody').innerHTML = html;
   open2('sortOv');
 }
 
 function forceUpdate() {
-  if (!('serviceWorker' in navigator)) { toast('서비스 워커 미지원'); return; }
-  // controller가 있으면 이미 SW가 제어 중
-  if (navigator.serviceWorker.controller) {
-    toast('🔄 업데이트 확인 중…');
-    navigator.serviceWorker.ready.then(reg => {
-      reg.update().then(() => {
-        const w = reg.installing || reg.waiting;
-        if (w) {
-          w.postMessage({ type: 'SKIP_WAITING' });
-        } else {
-          toast('✅ 이미 최신 버전입니다');
-        }
-      }).catch(e => toast('오류: ' + e.message));
-    });
-  } else {
-    // controller가 없으면 SW 재등록 시도
-    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
-      .then(reg => {
-        toast('🔄 업데이트 확인 중…');
-        return reg.update();
-      })
-      .then(reg => {
-        const w = reg.installing || reg.waiting;
-        if (w) w.postMessage({ type: 'SKIP_WAITING' });
-        else toast('✅ 최신 버전입니다');
-      })
-      .catch(e => toast('오류: ' + e.message));
-  }
+  if (!('serviceWorker' in navigator)) { toast('\ubbf8\uc9c0\uc6d0'); return; }
+  navigator.serviceWorker.ready.then(function(reg) {
+    toast('\ud655\uc778 \uc911...');
+    reg.update().then(function() {
+      var w = reg.installing || reg.waiting;
+      if (w) {
+        w.postMessage({ type: 'SKIP_WAITING' });
+      } else {
+        toast('\ucd5c\uc2e0 \ubc84\uc804\uc785\ub2c8\ub2e4');
+      }
+    }).catch(function(e) { toast('Error: ' + e.message); });
+  }).catch(function(e) { toast('SW Error: ' + e.message); });
 }
 function setOrder(k) { order=k; close2('sortOv'); render(); }
 
