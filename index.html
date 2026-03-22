@@ -693,8 +693,37 @@ function openSort() {
   document.getElementById('sortBody').innerHTML = opts.map(o=>`
     <div class="sopt ${order===o.k?'on':''}" onclick="setOrder('${o.k}')">
       ${o.l} ${order===o.k?'<span>✓</span>':''}
-    </div>`).join('');
+    </div>`).join('')
+    + `<div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border)">
+        <button onclick="forceUpdate()" style="
+          width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
+          background:transparent;color:var(--text2);font-size:12px;font-family:'Noto Sans KR',sans-serif;
+          cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="23 4 23 10 17 10"/>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+          </svg>
+          앱 업데이트 확인
+        </button>
+      </div>`;
   open2('sortOv');
+}
+
+function forceUpdate() {
+  if (!('serviceWorker' in navigator)) { toast('서비스 워커를 지원하지 않습니다'); return; }
+  navigator.serviceWorker.getRegistration('./sw.js').then(reg => {
+    if (!reg) { toast('등록된 서비스 워커가 없습니다'); return; }
+    toast('🔄 업데이트 확인 중…');
+    reg.update().then(() => {
+      const w = reg.installing || reg.waiting;
+      if (w) {
+        w.postMessage({ type: 'SKIP_WAITING' });
+        // controllerchange 이벤트가 reload 처리 — 데이터는 localStorage에 안전
+      } else {
+        toast('✅ 이미 최신 버전입니다');
+      }
+    });
+  });
 }
 function setOrder(k) { order=k; close2('sortOv'); render(); }
 
