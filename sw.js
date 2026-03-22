@@ -1,41 +1,40 @@
-const CACHE_VERSION = ‘v1.0.3’;
-const CACHE_NAME = `order-checklist-${CACHE_VERSION}`;
+// ★ 코드를 수정할 때마다 이 버전 번호를 올려주세요 ★
+// 예: v1 → v2 → v3 …
+const VERSION = ‘v1’;
+const CACHE   = `stock-mgr-${VERSION}`;
 
-const urlsToCache = [
+// 캐시할 파일 목록
+const ASSETS = [
 ‘./’,
-‘./index.html’
+‘./index.html’,
 ];
 
-self.addEventListener(‘install’, event => {
-event.waitUntil(
-caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+// ── 설치: 새 버전 파일을 캐시에 저장 ──
+self.addEventListener(‘install’, e => {
+e.waitUntil(
+caches.open(CACHE).then(c => c.addAll(ASSETS))
 );
-// skipWaiting 제거 - 앱 사용 중 강제 활성화 방지
 });
 
-self.addEventListener(‘activate’, event => {
-event.waitUntil(
+// ── 활성화: 이전 버전 캐시 삭제 ──
+self.addEventListener(‘activate’, e => {
+e.waitUntil(
 caches.keys().then(keys =>
 Promise.all(
-keys
-.filter(key => key !== CACHE_NAME)
-.map(key => caches.delete(key))
+keys.filter(k => k !== CACHE).map(k => caches.delete(k))
 )
-)
+).then(() => self.clients.claim())
 );
-// clients.claim 제거 - 강제 페이지 재시작 방지
 });
 
-self.addEventListener(‘fetch’, event => {
-event.respondWith(
-caches.match(event.request).then(cached => {
-return fetch(event.request)
-.then(response => {
-const clone = response.clone();
-caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-return response;
-})
-.catch(() => cached);
-})
+// ── 요청 처리: 캐시 우선, 없으면 네트워크 ──
+self.addEventListener(‘fetch’, e => {
+e.respondWith(
+caches.match(e.request).then(cached => cached || fetch(e.request))
 );
+});
+
+// ── 메시지 수신: index.html에서 SKIP_WAITING 요청 시 즉시 교체 ──
+self.addEventListener(‘message’, e => {
+if (e.data?.type === ‘SKIP_WAITING’) self.skipWaiting();
 });
