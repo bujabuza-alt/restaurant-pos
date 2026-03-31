@@ -652,7 +652,7 @@ function render() {
     }
     if (viewMode === 'compact') {
       return `
-<div class="card compact ${s}" onclick="openDet('${item.id}')">
+<div class="card compact ${s}" onclick="openDet('${item.id}, event')">
   <div class="c-inf">
     <div class="c-name">${item.name}</div>
   </div>
@@ -667,7 +667,7 @@ function render() {
 </div>`;
     }
     return `
-<div class="card ${s}" onclick="openDet('${item.id}')">
+<div class="card ${s}" onclick="openDet('${item.id}', event)">
   <div class="c-inf">
     <div class="c-name">${item.name}</div>
     <div class="c-meta">
