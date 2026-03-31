@@ -639,7 +639,7 @@ function render() {
     if (orderMode) {
       const checked = orderSel.has(item.id);
       return `
-<div class="card ${s} sel-mode ${checked?'checked':''}" onclick="toggleOrderSel('${item.id}')">
+<div class="card ${s} sel-mode ${checked?'checked':''}" onclick="toggleOrderSel('${item.id}', event)">
   <div class="c-check">${checked?'✓':''}</div>
   <div class="c-inf">
     <div class="c-name">${item.name}</div>
