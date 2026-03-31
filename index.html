@@ -29,6 +29,16 @@
         if (!refreshing) { refreshing = true; location.reload(); }
       });
     }
+    function changeQty(id, value) {
+  const num = parseInt(value);
+  const item = DB.find(i => i.id === id);
+  if (item) {
+    item.qty = (isNaN(num) || num < 0) ? 0 : num;
+    persist();   // 데이터 저장
+    render();    // 화면 새로고침
+    toast('수량이 변경되었습니다');
+  }
+}
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
