@@ -29,16 +29,6 @@
         if (!refreshing) { refreshing = true; location.reload(); }
       });
     }
-    function changeQty(id, value) {
-  const num = parseInt(value);
-  const item = DB.find(i => i.id === id);
-  if (item) {
-    item.qty = (isNaN(num) || num < 0) ? 0 : num;
-    persist();   // 데이터 저장
-    render();    // 화면 새로고침
-    toast('수량이 변경되었습니다');
-  }
-}
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
   <style>
@@ -338,40 +328,6 @@
       pointer-events: none;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    /* 새 상품 추가 버튼(FAB)이 항상 최상위에 오도록 */
-.fab,
-#mainFab {
-  position: fixed !important;
-  z-index: 9999 !important;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
-}
-
-/* 모달이 뜰 때도 버튼이 가려지지 않게 */
-#addOv,
-.overlay,
-.modal {
-  z-index: 10000 !important;
-}
-    .qty-control {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.qty-select {
-  padding: 8px 12px;
-  font-size: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  background: white;
-  min-width: 95px;
-  cursor: pointer;
-}
-
-.qty-select:focus {
-  border-color: #007bff;
-  outline: none;
-}
   </style>
 </head>
 <body>
@@ -669,7 +625,7 @@ function render() {
     if (orderMode) {
       const checked = orderSel.has(item.id);
       return `
-<div class="card ${s} sel-mode ${checked?'checked':''}" onclick="toggleOrderSel('${item.id}', event)">
+<div class="card ${s} sel-mode ${checked?'checked':''}" onclick="toggleOrderSel('${item.id}')">
   <div class="c-check">${checked?'✓':''}</div>
   <div class="c-inf">
     <div class="c-name">${item.name}</div>
@@ -682,34 +638,22 @@ function render() {
     }
     if (viewMode === 'compact') {
       return `
-<div class="card compact ${s}" onclick="openDet('${item.id}, event')">
+<div class="card compact ${s}" onclick="openDet('${item.id}')">
   <div class="c-inf">
     <div class="c-name">${item.name}</div>
   </div>
   <div class="c-qty">
     <div class="qty-num ${qc}">${item.qty}</div>
     <div style="font-size:11px;color:var(--text2);margin-right:2px">${item.unit||'개'}</div>
-   <!-- 기존 qty-ctrl 부분을 아래로 바꾸기 -->
-<div class="qty-control" onclick="event.stopPropagation()">
-  <select class="qty-select" onchange="changeQty('${item.id}', this.value)">
-    <option value="0" ${item.qty == 0 ? 'selected' : ''}>0</option>
-    <option value="1" ${item.qty == 1 ? 'selected' : ''}>1</option>
-    <option value="2" ${item.qty == 2 ? 'selected' : ''}>2</option>
-    <option value="3" ${item.qty == 3 ? 'selected' : ''}>3</option>
-    <option value="5" ${item.qty == 5 ? 'selected' : ''}>5</option>
-    <option value="10" ${item.qty == 10 ? 'selected' : ''}>10</option>
-    <option value="20" ${item.qty == 20 ? 'selected' : ''}>20</option>
-    <option value="30" ${item.qty == 30 ? 'selected' : ''}>30</option>
-    <option value="50" ${item.qty == 50 ? 'selected' : ''}>50</option>
-    <option value="100" ${item.qty == 100 ? 'selected' : ''}>100</option>
-    <option value="custom" ${![0,1,2,3,5,10,20,30,50,100].includes(item.qty) ? 'selected' : ''}>직접입력</option>
-  </select>
-</div>
+    <div class="qty-ctrl" onclick="event.stopPropagation()">
+      <button class="qbtn m" onclick="adj('${item.id}',-1)">−</button>
+      <button class="qbtn p" onclick="adj('${item.id}',+1)">＋</button>
+    </div>
   </div>
 </div>`;
     }
     return `
-<div class="card ${s}" onclick="openDet('${item.id}', event)">
+<div class="card ${s}" onclick="openDet('${item.id}')">
   <div class="c-inf">
     <div class="c-name">${item.name}</div>
     <div class="c-meta">
