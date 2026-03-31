@@ -328,6 +328,20 @@
       pointer-events: none;
     }
     .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    /* 새 상품 추가 버튼(FAB)이 항상 최상위에 오도록 */
+.fab,
+#mainFab {
+  position: fixed !important;
+  z-index: 9999 !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* 모달이 뜰 때도 버튼이 가려지지 않게 */
+#addOv,
+.overlay,
+.modal {
+  z-index: 10000 !important;
+}
   </style>
 </head>
 <body>
