@@ -689,10 +689,22 @@ function render() {
   <div class="c-qty">
     <div class="qty-num ${qc}">${item.qty}</div>
     <div style="font-size:11px;color:var(--text2);margin-right:2px">${item.unit||'개'}</div>
-    <div class="qty-ctrl" onclick="event.stopPropagation()">
-      <button class="qbtn m" onclick="adj('${item.id}',-1)">−</button>
-      <button class="qbtn p" onclick="adj('${item.id}',+1)">＋</button>
-    </div>
+   <!-- 기존 qty-ctrl 부분을 아래로 바꾸기 -->
+<div class="qty-control" onclick="event.stopPropagation()">
+  <select class="qty-select" onchange="changeQty('${item.id}', this.value)">
+    <option value="0" ${item.qty == 0 ? 'selected' : ''}>0</option>
+    <option value="1" ${item.qty == 1 ? 'selected' : ''}>1</option>
+    <option value="2" ${item.qty == 2 ? 'selected' : ''}>2</option>
+    <option value="3" ${item.qty == 3 ? 'selected' : ''}>3</option>
+    <option value="5" ${item.qty == 5 ? 'selected' : ''}>5</option>
+    <option value="10" ${item.qty == 10 ? 'selected' : ''}>10</option>
+    <option value="20" ${item.qty == 20 ? 'selected' : ''}>20</option>
+    <option value="30" ${item.qty == 30 ? 'selected' : ''}>30</option>
+    <option value="50" ${item.qty == 50 ? 'selected' : ''}>50</option>
+    <option value="100" ${item.qty == 100 ? 'selected' : ''}>100</option>
+    <option value="custom" ${![0,1,2,3,5,10,20,30,50,100].includes(item.qty) ? 'selected' : ''}>직접입력</option>
+  </select>
+</div>
   </div>
 </div>`;
     }
