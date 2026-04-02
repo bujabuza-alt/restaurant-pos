@@ -115,16 +115,14 @@
     .qty-unit { font-size: 11px; color: var(--text2); }
     .qty-ctrl { display: flex; gap: 6px; }
 
-    .qbtn {
-      width: 28px; height: 28px; border-radius: 8px;
-      border: 1px solid var(--border); background: var(--surf2); color: var(--text);
-      font-size: 17px; line-height: 1; display: flex; align-items: center; justify-content: center;
-      touch-action: manipulation; cursor: pointer;
-      -webkit-user-select: none; user-select: none;
+    .qty-sel {
+      height: 28px; border-radius: 8px; padding: 0 6px;
+      border: 1px solid var(--accent); background: var(--surf2); color: var(--text);
+      font-size: 13px; font-family: 'Space Mono', monospace; font-weight: 700;
+      cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
+      min-width: 52px; text-align: center;
     }
-    .qbtn:active { opacity: .6; }
-    .qbtn.p { border-color: var(--accent); color: var(--accent); }
-    .qbtn.m { border-color: rgba(255,59,92,.4); color: var(--danger); }
+    .qty-sel:focus { border-color: var(--accent); }
 
     .empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text2); text-align: center; gap: 12px; }
     .empty .ei { font-size: 48px; }
@@ -198,16 +196,15 @@
     .dqc { background: var(--surf2); border-radius: 16px; padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .dq-lbl { font-size: 13px; color: var(--text2); margin-bottom: 4px; }
     .dq-num { font-family: 'Space Mono', monospace; font-size: 36px; font-weight: 700; }
-    .dq-ctrl { display: flex; flex-direction: column; gap: 8px; }
-    .dqbtn {
-      width: 44px; height: 44px; border-radius: 12px; border: none;
-      font-size: 22px; line-height: 1; display: flex; align-items: center; justify-content: center;
-      touch-action: manipulation; cursor: pointer;
-      -webkit-user-select: none; user-select: none;
+    .dq-ctrl { display: flex; align-items: center; }
+    .dq-sel {
+      height: 52px; border-radius: 12px; padding: 0 12px;
+      border: 2px solid var(--accent); background: var(--surf2); color: var(--text);
+      font-size: 20px; font-family: 'Space Mono', monospace; font-weight: 700;
+      cursor: pointer; outline: none; -webkit-appearance: none; appearance: none;
+      min-width: 80px; text-align: center;
     }
-    .dqbtn:active { opacity: .65; }
-    .dqbtn.p { background: rgba(0,229,160,.14); color: var(--accent); }
-    .dqbtn.m { background: rgba(255,59,92,.14); color: var(--danger); }
+    .dq-sel:focus { border-color: var(--accent); }
 
     .dmg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .dmi { background: var(--surf2); border-radius: 12px; padding: 12px; }
@@ -646,8 +643,7 @@ function render() {
     <div class="qty-num ${qc}">${item.qty}</div>
     <div style="font-size:11px;color:var(--text2);margin-right:2px">${item.unit||'개'}</div>
     <div class="qty-ctrl" onclick="event.stopPropagation()">
-      <button class="qbtn m" onclick="adj('${item.id}',-1)">−</button>
-      <button class="qbtn p" onclick="adj('${item.id}',+1)">＋</button>
+      <select class="qty-sel" onchange="setQty('${item.id}',this.value)">${qtyOpts(item.qty)}</select>
     </div>
   </div>
 </div>`;
@@ -664,8 +660,7 @@ function render() {
     <div class="qty-num ${qc}">${item.qty}</div>
     <div class="qty-unit">${item.unit||'개'}</div>
     <div class="qty-ctrl" onclick="event.stopPropagation()">
-      <button class="qbtn m" onclick="adj('${item.id}',-1)">−</button>
-      <button class="qbtn p" onclick="adj('${item.id}',+1)">＋</button>
+      <select class="qty-sel" onchange="setQty('${item.id}',this.value)">${qtyOpts(item.qty)}</select>
     </div>
   </div>
 </div>`;
@@ -741,6 +736,32 @@ function copyOrder() {
     toggleOrderMode();
   });
 }
+
+/* ── QTY DROPDOWN HELPERS ── */
+function qtyOpts(current) {
+  const max = Math.max(99, current + 20);
+  let s = '';
+  for (let i = 0; i <= max; i++) s += `<option value="${i}"${i===current?' selected':''}>${i}</option>`;
+  return s;
+}
+
+function setQty(id, newQty) {
+  const item = DB.find(i=>i.id===id);
+  if (!item) return;
+  const prev = item.qty;
+  item.qty = Math.max(0, parseInt(newQty)||0);
+  if (item.qty !== prev) {
+    if (!item.hist) item.hist=[];
+    item.hist.unshift({d: item.qty-prev, r: item.qty, ts: Date.now(), m:''});
+    if (item.hist.length>200) item.hist.pop();
+    item.upd = Date.now();
+    persist(); render();
+    if (item.qty===0) toast(`⚠️ ${item.name} 품절!`);
+    else if (item.min && item.qty===item.min) toast(`⚠️ ${item.name} 재고 부족`);
+  }
+}
+
+function setQtyDet(id, newQty) { setQty(id, newQty); renderDet(id); }
 
 /* ── ADJUST QTY ── */
 function adj(id, delta) {
@@ -909,8 +930,7 @@ function renderDet(id) {
         <div style="font-size:12px;color:var(--text2);margin-top:2px">${it.unit||'개'} · 최소 ${it.min||0}${it.unit||'개'}</div>
       </div>
       <div class="dq-ctrl">
-        <button class="dqbtn p" onclick="adjDet('${id}',1)">＋</button>
-        <button class="dqbtn m" onclick="adjDet('${id}',-1)">−</button>
+        <select class="dq-sel" onchange="setQtyDet('${id}',this.value)">${qtyOpts(it.qty)}</select>
       </div>
     </div>
     <div class="dmg">
